@@ -123,8 +123,74 @@ This endpoint is used to authenticate a user and return a JWT token if successfu
     "error": "Internal Server Error"
   }
   ```
+  ...existing code...
+
+### Endpoint: `/users/profile`
+
+### Description
+This endpoint retrieves the profile information of the currently authenticated user.
+
+### Method: `GET`
+
+### Authentication
+Requires a valid JWT token in the Authorization header or cookie.
+
+### Responses
+#### Success Response
+- **Status Code**: `200 OK`
+- **Response Body**:
+  ```json
+  {
+    "fullname": {
+      "firstname": "John",
+      "lastname": "Doe"
+    },
+    "email": "johndoe@example.com"
+  }
+  ```
+
+#### Error Responses
+- **401 Unauthorized**: If no valid token is provided
+  ```json
+  {
+    "error": "Unauthorized access"
+  }
+  ```
+- **500 Internal Server Error**: If an unexpected server error occurs
+
+### Endpoint: `/users/logout`
+
+### Description
+This endpoint logs out the current user by invalidating their JWT token.
+
+### Method: `GET`
+
+### Authentication
+Requires a valid JWT token in the Authorization header or cookie.
+
+### Responses
+#### Success Response
+- **Status Code**: `200 OK`
+- **Response Body**:
+  ```json
+  {
+    "msg": "Logged out successfully"
+  }
+  ```
+
+#### Error Responses
+- **401 Unauthorized**: If no valid token is provided
+  ```json
+  {
+    "error": "Unauthorized access"
+  }
+  ```
+- **500 Internal Server Error**: If an unexpected server error occurs
 
 ### Notes
+- The logout endpoint blacklists the current token
+- Blacklisted tokens expire after 24 hours
+- After logout, the token cookie is cleared
 - The password is stored securely using hashing.
 - A JWT token is returned upon successful login.
 - Ensure the request follows the defined structure to avoid validation errors.
