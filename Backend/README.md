@@ -195,101 +195,165 @@ Requires a valid JWT token in the Authorization header or cookie.
 - A JWT token is returned upon successful login.
 - Ensure the request follows the defined structure to avoid validation errors.
 
-
 # Captain API Documentation
+
+## Endpoints Overview
+- POST `/captains/register` - Register a new captain
+- POST `/captains/login` - Authenticate captain
+- GET `/captains/profile` - Get captain's profile
+- GET `/captains/logout` - Logout captain
 
 ## Endpoint: `/captains/register`
 
-### Description
-This endpoint registers a new captain with their vehicle details.
-
 ### Method: `POST`
 
-### Request Body (JSON)
+### Request Body
 ```json
 {
   "fullname": {
-    "firstname": "John",
-    "lastname": "Smith"
+    "firstname": "John",       // Required, min 2 chars
+    "lastname": "Smith"        // Optional, min 2 chars if provided
   },
-  "email": "john.smith@example.com",
-  "password": "SecurePass123",
+  "email": "john.smith@example.com",    // Required, valid email format
+  "password": "SecurePass123",          // Required, min 6 chars
   "vehicle": {
-    "color": "Black",
-    "plate": "MH02AB1234",
-    "capacity": 4,
-    "vehicleType": "car"
+    "color": "Black",         // Required, min 3 chars
+    "plate": "MH02AB1234",    // Required, min 3 chars
+    "capacity": 4,            // Required, positive integer
+    "vehicleType": "car"      // Required, enum: "car", "bike", "auto"
   }
 }
 ```
 
-### Request Validation
-- `fullname.firstname`: Required, at least 2 characters long
-- `fullname.lastname`: Optional, at least 2 characters long if provided
-- `email`: Required, must be a valid email format
-- `password`: Required, at least 6 characters long
-- `vehicle.color`: Required, at least 3 characters long
-- `vehicle.plate`: Required, at least 3 characters long
-- `vehicle.capacity`: Required, must be an integer greater than 0
-- `vehicle.vehicleType`: Required, must be one of: "car", "bike", "auto"
-
-### Responses
-#### Success Response
-- **Status Code**: `201 Created`
-- **Response Body**:
-  ```json
-  {
-    "token": "<JWT_TOKEN>",
-    "captain": {
-      "fullname": {
-        "firstname": "John",
-        "lastname": "Smith"
-      },
-      "email": "john.smith@example.com",
-      "vehicle": {
-        "color": "Black",
-        "plate": "MH02AB1234",
-        "capacity": 4,
-        "vehicleType": "car"
-      },
-      "status": "inactive",
-      "location": {
-        "lat": null,
-        "lng": null
-      }
+### Success Response
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIs...",   // JWT token for authentication
+  "captain": {
+    "fullname": {
+      "firstname": "John",
+      "lastname": "Smith"
+    },
+    "email": "john.smith@example.com",
+    "vehicle": {
+      "color": "Black",
+      "plate": "MH02AB1234",
+      "capacity": 4,
+      "vehicleType": "car"
+    },
+    "status": "inactive",     // Default status
+    "socketId": null,         // Used for real-time tracking
+    "location": {
+      "lat": null,           // Updated during active rides
+      "lng": null
     }
   }
-  ```
+}
+```
 
-#### Error Responses
-- **400 Bad Request**: If validation fails
-  ```json
-  {
-    "errors": [
-      {
-        "msg": "Invalid Email",
-        "param": "email",
-        "location": "body"
-      }
-    ]
+## Endpoint: `/captains/login`
+
+### Method: `POST`
+
+### Request Body
+```json
+{
+  "email": "john.smith@example.com",    // Required, valid email
+  "password": "SecurePass123"           // Required, min 6 chars
+}
+```
+
+### Success Response
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "captain": {
+    "fullname": {
+      "firstname": "John",
+      "lastname": "Smith"
+    },
+    "email": "john.smith@example.com",
+    "vehicle": {
+      "color": "Black",
+      "plate": "MH02AB1234",
+      "capacity": 4,
+      "vehicleType": "car"
+    },
+    "status": "inactive"
   }
-  ```
-- **400 Bad Request**: If email already exists
-  ```json
-  {
-    "message": "Captain Already exists"
+}
+```
+
+## Endpoint: `/captains/profile`
+
+### Method: `GET`
+### Authentication: Required (JWT Token)
+
+### Success Response
+```json
+{
+  "captain": {
+    "fullname": {
+      "firstname": "John",
+      "lastname": "Smith"
+    },
+    "email": "john.smith@example.com",
+    "vehicle": {
+      "color": "Black",
+      "plate": "MH02AB1234",
+      "capacity": 4,
+      "vehicleType": "car"
+    },
+    "status": "inactive",
+    "location": {
+      "lat": null,
+      "lng": null
+    }
   }
-  ```
-- **500 Internal Server Error**: If an unexpected server error occurs
-  ```json
-  {
-    "error": "Internal Server Error"
-  }
-  ```
+}
+```
+
+## Endpoint: `/captains/logout`
+
+### Method: `GET`
+### Authentication: Required (JWT Token)
+
+### Success Response
+```json
+{
+  "message": "Logout Sucessfully"
+}
+```
+
+### Common Error Responses
+```json
+{
+  "errors": [
+    {
+      "msg": "Invalid Email",           // Validation error
+      "param": "email",
+      "location": "body"
+    }
+  ]
+}
+```
+
+```json
+{
+  "message": "Captain Already exist"    // Registration with existing email
+}
+```
+
+```json
+{
+  "error": "Unauthorized access"        // Invalid or missing token
+}
+```
 
 ### Notes
-- The captain status is set to "inactive" by default
-- Location coordinates are initially set to null
-- The password is stored securely using bcrypt hashing
-- A JWT token is returned upon successful registration
-- The socketId field is used for real-time tracking
+- All endpoints except register/login require JWT authentication
+- Token is provided in Authorization header or cookie
+- Password is hashed using bcrypt before storage
+- Socket ID is used for real-time location tracking
+- Vehicle type must be one of: "car", "bike", "auto"
+- Captain status can be "active" or "inactive"
